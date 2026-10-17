@@ -1,14 +1,19 @@
 ##
-# Record Kicks and Bans v3.0
+# Record Kicks and Bans v3.1
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
-#  This script will only run on eggdrop 1.5.5 or greater.
+#  This script will only run on eggdrop 1.6.14 or greater.
 #
 #    R.I.P. Mom, To always be remembered; Nancy Marie Gregory.
 #
-# My Website - http://mc.purehype.net:81/
-# Have a bug?  http://mc.purehype.net:81/bugzilla/
+# My Website - http://mc.purehype.net/
+# Have a bug or script not working correctly?
+#   http://mc.purehype.net/bugzilla/
+# Have a question?
+#   http://forum.purehype.net/viewforum.php?f=5
 ##
 
+##
+# Description
 ##
 # This script will keep tally on who kicks/ bans then e-mail's the stats to a
 # set able e-mail's address.  This script is more to monitor who's abusing ops
@@ -36,7 +41,7 @@
 ##
 
 ##
-# Settings
+# Configuration
 ##
 #
 
@@ -44,7 +49,7 @@
 # format, <global>|<channel>.  The user must also have at least one e-mail set
 # via dcc command `e-mail`.  Set this to "-|-" to state send e-mail to anyone
 # that has an e-mail address defined.
-set mc_rkb(email_flag) "nm|nm"
+set mc_rkb(:config:email_flag) "nm|nm"
 
 # What flagged users do you want to exempt from being recorded by this script?
 # Flag format, <global>|<channel>.  Set this to "-|-" to exempt no one.
@@ -53,51 +58,41 @@ set mc_rkb(exempt) "-|-"
 # When do you want to e-mail out the log(s)?  Set this to the hour in which you
 # want.  Separate each hour with a space.  Time is in 0-23 format, military.
 # examples:
-#  set mc_rkb(time) "0"           ;# This is at Midnight
-#  set mc_rkb(time) "5"           ;# This is at 5am
-#  set mc_rkb(time) "13"          ;# This is at 1pm
-#  set mc_rkb(time) "23"          ;# This is at 11pm
-#  set mc_rkb(time) "7 19"        ;# This is at 7am and 7pm
-#  set mc_rkb(time) "3 10 18 23"  ;# This is at 3am, 10am, 6pm and 11pm
-set mc_rkb(time) "0"
+#  set mc_rkb(:config:time) "0"           ;# This is at Midnight
+#  set mc_rkb(:config:time) "5"           ;# This is at 5am
+#  set mc_rkb(:config:time) "13"          ;# This is at 1pm
+#  set mc_rkb(:config:time) "23"          ;# This is at 11pm
+#  set mc_rkb(:config:time) "7 19"        ;# This is at 7am and 7pm
+#  set mc_rkb(:config:time) "3 10 18 23"  ;# This is at 3am, 10am, 6pm and 11pm
+set mc_rkb(:config:time) "0"
 
 # What SMTP server do you want to use to send the e-mail?  Specify the host or
 # ip here.
-set mc_rkb(smtp_server) localhost
+set mc_rkb(:config:smtp_server) localhost
 
 # What SMTP server do you want to use to send the e-mail?  Specify the port
 # here.
-set mc_rkb(smtp_port) 25
+set mc_rkb(:config:smtp_port) 25
 
 # What file do you want to log the raw kick/ban information to?
-set mc_rkb(log) "./.rkb.log"
+set mc_rkb(:config:log) "./.rkb.log"
 
 # In addition to emailing the log, you can also have it save to a file (after
 # being parsed with the templet, of course). Set this to "" to disable file
 # saving.
 # Ex: set mc_rkb(file) "/usr/barnie/www/kb_logs/%channel.html"
 #  %channel will be automatically replaced with the channel the log pertains to.
-set mc_rkb(file) ""
+set mc_rkb(:config:file) ""
 
-
-## SVS Client (Script Version Service) v3.2.1 ##
+## SVS Client (Script Version Service) v4.1.2 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
-# there is a newer version of this script available.  This will only notify
-# users of the new version via a note.  It's up to the owner of the bot to
-# download, adjust settings then install the script.
+# there is a newer version of this script available.  If a newer version is
+# found, the script will be auto updated.
 
-# If a newer version is found, whom do you want to notify?  The notification is
-# sent via a note.  Separate each user with a space, or set this to "" to
-# disable SVS notification.  For those whom know TCL; do not put this in list
-# format, keep it in string format.
-set mc_rkb(svs:notify) "MC_8"
-
-# Would you like to restrict the concept of a new version to stable releases
-# only?
-#   0 = No, inform of both stable and beta release versions.
-#   1 = Yes, inform of only stable release versions.
-set mc_rkb(svs:mode) 0
-
+# [0=no/1=yes] Do you want to enable auto updating?  If you chose to disable
+# auto updating, it will not automatically update the script upon finding a
+# newer version.
+set mc_rkb(:config:svs:enable) 1
 
 #
 ##
@@ -296,51 +291,149 @@ set mc_rkb(body) {
 ##
 #
 
+## SVS insert (pre code)
 #Script:mc_rkb
-
-set mc_rkb(script)      "Record Kick and Bans"
-set mc_rkb(version)     "v3.0"
-set mc_rkb(svs:script)  "record_kick-ban"
-set mc_rkb(svs:version) "003000000000"
-set mc_rkb(svs:server)  "mc.svs.purehype.net"
-set mc_rkb(svs:port)    "81"
-set mc_rkb(svs:get)     "/index.tcl"
-set mc_rkb(svs:query)   \
-  "svs=$mc_rkb(svs:script)&version=$mc_rkb(svs:version)"
-
 catch {unset temp}
-if {![info exists numversion] || ($numversion < "1050500")} {
+
+foreach temp(bind) [binds mc:rkb:*] {
+  foreach {temp(1) temp(2) temp(3) temp(4) temp(5)} $temp(bind) break
+  catch {unbind $temp(1) $temp(2) $temp(3) $temp(5)}
+}
+
+set mc_rkb(info:vars) ""
+foreach {temp(name) temp(value)} [array get mc_rkb :config:*] {
+  lappend mc_rkb(info:vars) [list $temp(name) $temp(value)]
+}
+set mc_rkb(info:loc) [info script]
+array set mc_rkb [list \
+  script                 "Record Kick and Bans" \
+  version                "v3.1" \
+  svs:script             "record_kick-ban" \
+  svs:version            "003001000000" \
+  svs:client_version     "v4.1.2" \
+  svs:client_svs_version "004001002000" \
+  svs:server             "mc.svs.purehype.net" \
+  svs:port               "80" \
+  svs:get                "/index.tcl"]
+set mc_rkb(svs:query)    "svs=$mc_rkb(svs:script)&"
+append mc_rkb(svs:query) "version=$mc_rkb(svs:version)&"
+append mc_rkb(svs:query) \
+  "svs_version=$mc_rkb(svs:client_svs_version)"
+
+if {![info exists numversion] || 
+    ([string range $numversion 0 4] < "10614") ||
+    (([string range $numversion 0 4] == "10614") &&
+     ([string range $numversion 5 6] != "00"))} {
   set temp(tag) "$mc_rkb(script) $mc_rkb(version)"
-  putlog "$temp(tag) by MC_8 will only work on eggdrop 1.5.5 or greater."
-  putlog "$temp(tag)  will not work with eggdrop $version."
-  putlog "$temp(tag)  not loaded."
-  return 1
+  putloglev o * \
+    "$temp(tag) by MC_8 will only work on eggdrop 1.6.14 (stable) or greater."
+  putloglev o * "$temp(tag) will not work with eggdrop $version."
+  putloglev o * "$temp(tag) not loaded."
+  uplevel #0 {
+    if {[info exists temp] && ![array exists temp]} {unset temp}
+    set temp(svs_return) [list 0 "Need to upgrade eggdrop."]
+  }; return 1
 }
+## ^
 
+# Error Catching System (ECS), v4.1.
+proc mc:rkb:errchk {command args} {
+  
+  # Enable (1) or disable (0) auto reporting of bugs to mc8@purehype.net.
+  # This setting here for those who want to disable it in fear of privacy
+  # violations.
+  set enable_auto_reporting 1
+  
+  if {![info exists ::lastCommand]} {set ::lastCommand [list]}
+  set ::lastCommand \
+    "[list [list [clock seconds] $command $args]] $::lastCommand"
+  set ::lastCommand [lrange $::lastCommand 0 4]
+  if {![catch {eval $command $args} return]} {return $return}
+  if {$::errorCode == "mc.ecs.done"} {return -errorcode mc.ecs.done -code error}
+  
+  set temp(lastbind) [expr {[info exists ::lastbind]?$::lastbind:"-NULL-"}]
+  set temp(eversion) [expr {[info exists ::version]?$::version:"-NULL-"}]
+  set message "
+    ************************************
+    (ECS 4.1) Error found in TCL script.
+    --------------
+    Script name   : $::mc_rkb(script)
+    Script version: $::mc_rkb(version)
+    Egg. Version  : $temp(eversion)
+    TCL Version   : [info tclversion] ([info patchlevel])
+    --------------
+    Last Bind     : $temp(lastbind)
+    Last Commands :"
+  foreach line $::lastCommand {
+    foreach {time command arg} $line break
+    append message "\n        ${time}- $command $arg"
+  }
+  append message "\n    Error stack   :"
+  foreach line [split $::errorInfo \n] {
+    append message "\n        $line"
+  }
+  append message "\n    --------------"
+  
+  set message [lrange [split $message \n] 1 end]
+  set offset [string first * [lindex $message 0]]
+  set new_message [list]
+  foreach line $message {lappend new_message [string range $line $offset end]}
+  set message $new_message
+  
+  if {!$enable_auto_reporting ||
+      [catch {socket -async mc.purehype.net 80} sid]} {
+    foreach line $message {putloglev o * $line}
+    putloglev o * "Submit this bug to http://mc.purehype.net/bugzilla/ . If"
+    putloglev o * "you are experiencing problems with bugzilla, contact MC_8"
+    putloglev o * "via email at mc8@purehype.net. Please include all"
+    putloglev o * "information shown here, in this ECS report."
+    putloglev o * "************************************"
+    return -errorcode mc.ecs.done -code error
+  }
+  fconfigure $sid -blocking 0 -buffering line
 
-# Error system, v3.0
-proc mc:rkb:error {command error arg} {
-  global mc_rkb version lastbind errorInfo
-  putlog "Error in script $mc_rkb(script) $mc_rkb(version)."
-  putlog "    Error System: v3.0"
-  putlog "       Last Bind: [expr {[info exists lastbind]?$lastbind:"-NULL-"}]"
-  putlog "         Command: $command"
-  putlog "       Arguments: $arg"
-  putlog "       Error Msg: $error"
-  putlog "    Egg. Version: [expr {[info exists version]?$version:"-NULL-"}]"
-  putlog "     TCL Version: [info tclversion]"
-  putlog "  TCL Patchlevel: [info patchlevel]"
-  putlog "*** Please submit this bug so MC_8 can fix it.  Visit"
-  putlog "*** http://mc.purehype.net:81/bugzilla/ to properly report the bug."
-  putlog \
-    "*** Please include ALL info. in the bug report, including the next(s)."
-  error $errorInfo
-}
+  set query [list]
+  # This info is passed should I need to hunt down the bot's owner for more
+  # information.
+  lappend query "Admin   : [expr {[info exists ::admin]?$::admin:""}]"
+  lappend query "Owner   : [expr {[info exists ::owner]?$::owner:""}]"
+  lappend query "Botnick : [expr {[info exists ::botnick]?$::botnick:""}]"
+  lappend query "Server  : [expr {[info exists ::server]?$::server:""}]"
+  lappend query "Channels: [join [lsort -dictionary [channels]] ", "]"
+  lappend query ""
+  
+  foreach line $message {lappend query $line}
+  lappend query "************************************"
+  
+  set new_query [list]
+  foreach line $query {
+    regsub -all -- "(\002|\017|\026|\037)" $line "" line
+    regsub -all -- "\003(\[0-9\]\[0-9\]?(,\[0-9\]\[0-9\]?)?)?" $line "" line
+    regsub -all {\%} $line "%25" line
+    set i [string length $line]
+    while {[regexp {[^a-zA-Z0-9%]} $line toh] && ($i >= 0)} {
+      scan "$toh" %c dec
+      regsub -all -- "\\${toh}" $line "%[format %X $dec]" line
+      incr i -1
+    }; lappend new_query $line
+  }; set query $new_query
+  
+  set query "message=[join $query %0a]"
+  puts $sid "POST /report_bug.tcl HTTP/1.0\
+           \nHost: mc.purehype.net:80\
+           \nContent-type: application/x-www-form-urlencoded\
+           \nContent-Length: [expr [string length $query] +2]"
+  puts $sid \n$query
+  close $sid
 
-proc mc:rkb:errchk {command arg} {
-  if {![catch {eval $command $arg} return]} {return $return}
-  mc:rkb:error $command $return $arg
-  return 0
+  foreach line $message {putloglev o * $line}
+  putloglev o * "Automatically sending bug report to MC_8."
+  putloglev o * "If you have a firewall setup, it may block the sending of this"
+  putloglev o * "report. You can check the status of your bug, as soon as MC_8"
+  putloglev o * "adds it, at http://mc.purehype.net/bugzilla/ ."
+  putloglev o * "************************************"
+  
+  return -errorcode mc.ecs.done -code error
 }
 # ^
 
@@ -354,7 +447,7 @@ if {[lsearch -exact ${whois-fields} $mc_rkb(whoisfield)] == "-1"} {
 
 bind dcc - rkb.email mc:rkb:dcc:rkb.email
 proc mc:rkb:dcc:rkb.email {handle idx arg} {
-  return [mc:rkb:errchk mc:rkb:dcc:rkb.email_ [list $handle $idx $arg]]
+  return [mc:rkb:errchk mc:rkb:dcc:rkb.email_ $handle $idx $arg]
 }
 proc mc:rkb:dcc:rkb.email_ {handle idx arg} {
   global mc_rkb
@@ -383,7 +476,7 @@ proc mc:rkb:dcc:rkb.email_ {handle idx arg} {
 
 bind dcc m rkb.chemail mc:rkb:dcc:rkb.chemail
 proc mc:rkb:dcc:rkb.chemail {handle idx arg} {
-  return [mc:rkb:errchk mc:rkb:dcc:rkb.chemail_ [list $handle $idx $arg]]
+  return [mc:rkb:errchk mc:rkb:dcc:rkb.chemail_ $handle $idx $arg]
 }
 proc mc:rkb:dcc:rkb.chemail_ {handle idx arg} {
   global mc_rkb
@@ -428,7 +521,7 @@ proc mc:rkb:ban {nick uhost handle channel mc victim} {
 }
 
 set temp(time) ""
-foreach temp(time_) [split $mc_rkb(time)] {
+foreach temp(time_) [split $mc_rkb(:config:time)] {
   if {($temp(time_) > "23") || ($temp(time_) < "0")} {
     lappend temp(time) 00
   } elseif {[string length $temp(time_)] == "1"} {
@@ -446,7 +539,7 @@ foreach temp(time_) $temp(time) {
 }
 
 proc mc:rkb:tts {{args ""}} {
-  return [mc:rkb:errchk mc:rkb:tts_ [list $args]]
+  return [mc:rkb:errchk mc:rkb:tts_ $args]
 }
 proc mc:rkb:tts_ {{args ""}} {
   global mc_rkb botnick
@@ -605,7 +698,7 @@ proc mc:rkb:tts_ {{args ""}} {
       set temp(::body) $a$b$c
     }
 
-    foreach handle [userlist $mc_rkb(email_flag) $channel] {
+    foreach handle [userlist $mc_rkb(:config:email_flag) $channel] {
       set temp(getuser) [getuser $handle XTRA $mc_rkb(whoisfield)]
       foreach addy [split $temp(getuser) " ,;"] {
         if {![regexp {^.*[^@]@.*\.[a-zA-Z][a-zA-Z][a-zA-Z]?[a-zA-Z]?$} $addy]} {
@@ -613,16 +706,20 @@ proc mc:rkb:tts_ {{args ""}} {
             "$mc_rkb(script): $handle has an invalid e-mail address; $addy"
           continue
         }
-        mc:rkb:sendemail \
-          [list $mc_rkb(from_name) $mc_rkb(from_addy)] \
-          [list $handle $addy] \
-          $temp(::subject) $temp(::body) $temp(::headers)
+        if {[catch {
+          mc:rkb:sendemail \
+            [list $mc_rkb(from_name) $mc_rkb(from_addy)] \
+            [list $handle $addy] \
+            $temp(::subject) $temp(::body) $temp(::headers)} error]} {
+  putloglev d * "$mc_rkb(script): Email NOT sent to \"$handle\" <$addy>: $error"
+          continue
+        }
         putloglev d * "$mc_rkb(script): Email sent to \"$handle\" <$addy>"
       }
     }
 
-    if {$mc_rkb(file) != ""} {
-      set temp(::file) [mc:rkb:replace -- $mc_rkb(file) \
+    if {$mc_rkb(:config:file) != ""} {
+      set temp(::file) [mc:rkb:replace -- $mc_rkb(:config:file) \
         [list %channel [string tolower $channel]]]
       if {![catch {open $temp(::file) w} id]} {
         putloglev d * "$mc_rkb(script): Error opening $temp(::file): $id"
@@ -638,14 +735,14 @@ proc mc:rkb:tts_ {{args ""}} {
 }
 
 proc mc:rkb:list {command {arg ""}} {
-  return [mc:rkb:errchk mc:rkb:list_ [list $command $arg]]
+  return [mc:rkb:errchk mc:rkb:list_ $command $arg]
 }
 proc mc:rkb:list_ {command {arg ""}} {
   # Format:
   # <channel> <hand> <nick> <victim> <reason> <unixtime> <victim_matches> \
   # <kick/ban>
   global mc_rkb
-  if {![file exists $mc_rkb(log)]} {close [open $mc_rkb(log) w]}
+  if {![file exists $mc_rkb(:config:log)]} {close [open $mc_rkb(:config:log) w]}
   switch -- $command {
     reset {
       # in: <channel>
@@ -663,7 +760,7 @@ proc mc:rkb:list_ {command {arg ""}} {
       # out: <list>
       set channel [string tolower $arg]
       set list ""
-      set io [open $mc_rkb(log) r]
+      set io [open $mc_rkb(:config:log) r]
       if {![eof $io]} {gets $io entry}
       while {![eof $io]} {
         gets $io entry
@@ -679,7 +776,7 @@ proc mc:rkb:list_ {command {arg ""}} {
       # in: <list>
       # out:
       set list $arg
-      set io [open $mc_rkb(log) w]
+      set io [open $mc_rkb(:config:log) w]
       puts $io "#v2.0:$mc_rkb(script):$mc_rkb(version):[clock seconds]"
       foreach entry $list {
         puts $io $entry
@@ -707,7 +804,7 @@ proc mc:rkb:list_ {command {arg ""}} {
         }
         set victim_matches [mc:rkb:findnicks $victim $channel]
       }
-      set io [open $mc_rkb(log) a]
+      set io [open $mc_rkb(:config:log) a]
       puts $io [list $channel $handle $nick $victim $reason [clock seconds] \
         $victim_matches $kickorban]
       close $io
@@ -915,12 +1012,14 @@ proc mc:rkb:sendemail {{args ""}} {
     set headers ""
   }
   if {$wait == "-wait"} {
-    if {[catch {socket $mc_rkb(smtp_server) $mc_rkb(smtp_port)} sid]} {
+    if {
+    [catch {socket $mc_rkb(:config:smtp_server) $mc_rkb(:config:smtp_port)} sid]
+    } {
       error "cannot create socket: $sid"
     }
     set mc_rkb(:vwait:$sid) 1
   } else {
-    set sid [socket -async $mc_rkb(smtp_server) $mc_rkb(smtp_port)]
+ set sid [socket -async $mc_rkb(:config:smtp_server) $mc_rkb(:config:smtp_port)]
   }
   fconfigure $sid -blocking 0 -buffering line
   set tout [after 60000 "mc:rkb:sendemail_fileevent $sid timeout"]
@@ -1219,6 +1318,16 @@ putloglev * o "$mc_rkb(script) $mc_rkb(version) by MC_8 loaded."
 ##
 # History
 ##
+# v3.1 (10.07.03)
+#  MC_8 -       - Upgraded SVS Client.  v3.2.1 -> v4.1.2
+#  MC_8 -       - Upgraded ECS.  v3.0 -> v4.1
+#  MC_8 - heber - Created a catch for sending mail to stop bug reports for
+#                 socket issues such as host unreachable or timeout of the smtp
+#                 server.  Will dump to console d but not as a debug for a
+#                 script problem.
+#                 Bugzilla Bug 261 
+#
+#
 # v3.0 (02.12.03)
 #  MC_8 - HC - Added `file` variable.
 #              Bugzilla Bug 106
